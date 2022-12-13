@@ -6,7 +6,7 @@
 #define N 1000
 
 // Matrix to store the distances between the cities
-int distances[N][N];
+int distances[N][N] = {0};
 
 // Function to find the minimum distance between the current city
 // and the remaining cities
@@ -56,7 +56,7 @@ int findMinCost(int visited[N])
 int main(int argc, char *argv[])
 {
 
-    char buffer[1024];
+    char buffer[8192];
     char *record, *line;
     int i = 0, j = 0;
 
@@ -74,34 +74,39 @@ int main(int argc, char *argv[])
     while ((line = fgets(buffer, sizeof(buffer), file)) != NULL)
     {
         j = 0;
-        record = strtok(line, ","); // Get first number(string)
+        record = strtok(line, ",");
         while (record != NULL)
         {
-            // printf("record : %s", record); // record is a string
-            // Place record in array
-            distances[i][j] = atoi(record); // record is converted to an int with atoi
-            j++;
-            record = strtok(NULL, ","); // Get next number(string)
+            // Check if record is a valid token
+            if (record != "")
+            {
+                // Place record in array
+                distances[i][j] = atoi(record);
+                j++;
+            }
+            record = strtok(NULL, ",");
         }
-        printf("%d\n", j); // This is used to check if j, # of columns, is 1000 before the while(record != NULL) ends.
         i++;
-        if (i == N) // If i == 1000, break
+        if (i == 1000)
+        {
+            printf("%d \n", i);
+            printf("%d \n", j);
             break;
- 
+        }
     }
 
     fclose(file);
 
-    printf("\n\nThe cost list is:");
+    // printf("\n\nThe cost list is:");
 
-    for (i = 0; i < N; i++)
-    {
-        printf("\n");
+    // for (i = 0; i < N; i++)
+    // {
+    //     printf("\n");
 
-        for (j = 0; j < N; j++)
-            printf("%d ", distances[i][j]);
-    }
-    printf("\n");
+    //     for (j = 0; j < N; j++)
+    //         printf("%d ", distances[i][j]);
+    // }
+    // printf("\n");
 
     // Array to keep track of which cities have been visited
     int visited[N] = {0};
