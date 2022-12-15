@@ -17,8 +17,10 @@
 
 // Matrix to store the distances between the cities
 int distances[N][N] = {{0}};
-int global_visited_cities[N + 1] = {0};
+// int global_visited_cities[N + 1] = {0};
+int *global_visited_cities;
 int global_mincost = 99999999;
+int global_count = 0;
 // Function to find the minimum distance between the current city
 // and the remaining cities
 int minDistance(int currCity, int visited[N])
@@ -53,6 +55,7 @@ int findMinCost(int visited[N])
     int local_minCost = 0;
     int currCity = 0;
     int local_visited_cities[N];
+    int local_count = 1;
 
     for (int i = 0; i < N; i++)
     {
@@ -69,6 +72,7 @@ int findMinCost(int visited[N])
         // printf("i = %d, city = %d\n", i, currCity);
         visited[currCity] = 1;
         local_visited_cities[i] = currCity;
+        local_count++;
 
         // Find the next closest city
         int nextCity = minDistance(currCity, visited);
@@ -100,6 +104,7 @@ int findMinCost(int visited[N])
         if (local_minCost < global_mincost) {
             global_mincost = local_minCost;
             memcpy(global_visited_cities, local_visited_cities, sizeof(local_visited_cities));
+            global_count = local_count;
         }
     }
 
@@ -112,6 +117,7 @@ int main(int argc, char *argv[])
     char buffer[8192];
     char *record, *line;
     int i = 0, j = 0;
+    global_visited_cities = malloc(1001 * sizeof(int));
 
     clock_t start = clock(); // Start the time to time reading the file and the computation
 
@@ -172,11 +178,13 @@ int main(int argc, char *argv[])
 
     printf("Minimum cost: %d\n", global_mincost);
 
-    printf("The number of cities traversed: %d\n", N + 1);
+    printf("The number of cities traversed: %d\n", global_count);
 
     printf("The list of cities reversed in order: ");
-    for (i = 0; i < N + 1; i++){
-        if (i == 1000) {
+    for (i = 0; i < global_count; i++)
+    {
+        if (i == global_count - 1)
+        {
             printf("%d", global_visited_cities[i]);
         }
         else {
