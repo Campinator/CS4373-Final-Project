@@ -23,65 +23,74 @@ int main(int argc, char *argv[])
 
     int sizes[] = {16, 32, 64, 128, 256, 496, 512, 1000, 1024, 2000, 2048, 3000, 4000, 4096};
 
-    printf("===SERIAL RUN===\n\n");
+    int threads[] = {2, 4, 8, 16, 32, 64, 128};
 
-    for (int i = 0; i < 14; i++)
+    omp_set_dynamic(0); // force using thread_num
+
+    for (int t = 0; t < 7; t++)
     {
-        int arraySize = sizes[i];
+        omp_set_num_threads(threads[t]);
 
-        double **a = malloc(arraySize * sizeof(double));
-        // Create filename
-        sprintf(f_name, "input-matrix/m%04dx%04d.bin", arraySize, arraySize);
-        // sprintf(f_name, "input-matrix/m0256x0256.bin");
-        printf("\n(1) Reading array file %s\n", f_name);
-        printf("(2) Size %dx%d\n", arraySize, arraySize);
-        // Open file
-        FILE *datafile = fopen(f_name, "rb");
-        // Read elelements
-        for (int i = 0; i < arraySize; i++)
+        printf("\n\n===PARALLEL RUN - %d THREADS===\n", threads[t]);
+
+        for (int i = 0; i < 14; i++)
         {
-            a[i] = (double *)malloc(arraySize * sizeof(double));
-            for (int j = 0; j < arraySize; j++)
+            int arraySize = sizes[i];
+
+            double **a = malloc(arraySize * sizeof(double));
+            // Create filename
+            sprintf(f_name, "input-matrix/m%04dx%04d.bin", arraySize, arraySize);
+            // sprintf(f_name, "input-matrix/m0256x0256.bin");
+            printf("\n(1) Reading array file %s\n", f_name);
+            printf("(2) Size %dx%d\n", arraySize, arraySize);
+            // Open file
+            FILE *datafile = fopen(f_name, "rb");
+            // Read elelements
+            for (int i = 0; i < arraySize; i++)
             {
-                fread(&a[i][j], sizeof(double), 1, datafile);
-                // printf("%f,", a[i][j]);
+                a[i] = (double *)malloc(arraySize * sizeof(double));
+                for (int j = 0; j < arraySize; j++)
+                {
+                    fread(&a[i][j], sizeof(double), 1, datafile);
+                    // printf("%f,", a[i][j]);
+                }
+                // printf("\n");
             }
-            // printf("\n");
+            // printf("Matrix has been read.\n");
+            fclose(datafile);
+
+            double start, end;
+
+            start = omp_get_wtime();
+            long double det = PLUDeterminantOMP(a, arraySize, false);
+            end = omp_get_wtime();
+            printf("(3) Determinant: %.6Le in %fs\n", det, (end - start));
+
+            start = omp_get_wtime();
+            long double det10 = PLUDeterminantOMP(a, arraySize, true);
+            end = omp_get_wtime();
+            printf("(4) Log10 Determinant: %.6Le in %fs\n", det10, (end - start));
+
+            // FILE *f = fopen("out.csv", "w");
+            // if (f == NULL)
+            // {
+            //     printf("Error opening file!\n");
+            //     exit(1);
+            // }
+
+            // // loop over the values in the matrix
+            // for (int i = 0; i < arraySize; i++)
+            // {
+            //     for (int j = 0; j < arraySize; j++)
+            //     {
+            //         fprintf(f, "%lf,", a[i][j]);
+            //     }
+            //     fprintf(f, "\n");
+            // }
+
+            // // close the file
+            // fclose(f);
         }
-        // printf("Matrix has been read.\n");
-        fclose(datafile);
-
-        double start, end;
-
-        start = omp_get_wtime();
-        long double det = PLUDeterminantSerial(a, arraySize, false);
-        end = omp_get_wtime();
-        printf("(3) Determinant: %.6Le in %fs\n", det, (end - start));
-
-        start = omp_get_wtime();
-        long double det10 = PLUDeterminantSerial(a, arraySize, true);
-        end = omp_get_wtime();
-        printf("(4) Log10 Determinant: %.6Le in %fs\n", det10, (end - start));
-
-        // FILE *f = fopen("out.csv", "w");
-        // if (f == NULL)
-        // {
-        //     printf("Error opening file!\n");
-        //     exit(1);
-        // }
-
-        // // loop over the values in the matrix
-        // for (int i = 0; i < arraySize; i++)
-        // {
-        //     for (int j = 0; j < arraySize; j++)
-        //     {
-        //         fprintf(f, "%lf,", a[i][j]);
-        //     }
-        //     fprintf(f, "\n");
-        // }
-
-        // // close the file
-        // fclose(f);
     }
 
     return 0;
@@ -197,7 +206,7 @@ long double PLUDeterminantOMP(double **arr, int n, bool lt)
         }
 
 // elimination
-#pragma omp parallel for
+        #pragma omp parallel for
         for (int i = k + 1; i < n; i++)
         {
             double factor = a[i][k] / a[k][k];
