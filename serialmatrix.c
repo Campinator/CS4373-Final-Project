@@ -1,9 +1,9 @@
 /**
  * @file matrixvector.c
- * @authors Camp Steiner, Jeff Luong, Ram Chandu
+ * @authors Camp Steiner, Jeff Luong
  *
- * Compile:  gcc -Wall -g -o matrixvector.o matrixvector.c
- * Usage: ./matrixvector.o
+ * Compile:  gcc -Wall -g -o serialmatrix.o serialmatrix.c -fopenmp -std=c99 =lm
+ * Usage: ./serialmatrix.o
  */
 #include <stdlib.h>
 #include <stdio.h>
