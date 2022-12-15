@@ -1,8 +1,8 @@
 /**
  * @file tsp.c
- * @authors Camp Steiner, Jeff Luong, Ram Chandu
+ * @authors Camp Steiner, Jeff Luong
  *
- * Compile:  gcc -Wall -g -fopenmp -o tsp.o tsp.c 
+ * Compile:  gcc -Wall -g -fopenmp -o tsp.o tsp.c -std=c99 -lm
  * Usage: ./tsp.o <number of threads>
  */
 #include <stdio.h>
@@ -11,6 +11,8 @@
 #include <omp.h>
 #include <limits.h>
 #include <time.h>
+#include <math.h>
+#include <float.h>
 
 // Number of cities
 #define N 1000
@@ -21,9 +23,70 @@ int distances[N][N] = {{0}};
 int *global_visited_cities;
 int global_mincost = 99999999;
 int global_count = 0;
+
+    // Define a structure to represent a city
+    typedef struct
+{
+    int x;
+    int y;
+} City;
+
+// Declare an array of City structures to represent the cities
+City cities[N];
+
+// Function to calculate the distance between two cities
+double calculateDistance(City city1, City city2)
+{
+    double distance = sqrt(pow(city1.x - city2.x, 2) + pow(city1.y - city2.y, 2));
+    return distance;
+}
+
+// Function to find the minimum distance from each city to the next closest city
+int findOptimalStartingCity()
+{
+    // Initialize the minimum distance and index of the optimal starting city
+    double minDistance = DBL_MAX;
+    int minIndex = 0;
+    // Loop through all cities
+    for (int i = 0; i < N; i++)
+    {
+        // Initialize the minimum distance to the next closest city
+        double minNextDistance = DBL_MAX;
+
+        // Loop through all other cities
+        for (int j = 0; j < N; j++)
+        {
+            // Skip the current city
+            if (i == j)
+                continue;
+
+            // Calculate the distance between the two cities
+            double distance = calculateDistance(cities[i], cities[j]);
+
+            // Update the minimum distance to the next closest city
+            if (distance < minNextDistance)
+            {
+                minNextDistance = distance;
+            }
+        }
+
+        // Update the minimum distance and index of the optimal starting city
+        if (minNextDistance < minDistance)
+        {
+            minDistance = minNextDistance;
+            minIndex = i;
+        }
+    }
+
+    // Return the index of the optimal starting city
+    return minIndex;
+}
+
+
+
 // Function to find the minimum distance between the current city
 // and the remaining cities
-int minDistance(int currCity, int visited[N])
+int minDistance(int currCity, int visited[N], int optimalCity)
 {
     // Store the minimum distance and the index of the next city
     int min = INT_MAX;
@@ -33,7 +96,7 @@ int minDistance(int currCity, int visited[N])
     for (int i = 0; i < N; i++)
     {
         // Check if the city has not been visited and is not the starting city
-        if (visited[i] == 0 && i != 0)
+        if (visited[i] == 0 && i != optimalCity)
         {
             // Check if the distance is less than the minimum
             if (distances[currCity][i] < min)
@@ -53,7 +116,8 @@ int minDistance(int currCity, int visited[N])
 int findMinCost(int visited[N])
 {
     int local_minCost = 0;
-    int currCity = 0;
+    int optimalCity = findOptimalStartingCity();
+    int currCity = optimalCity;
     int local_visited_cities[N];
     int local_count = 1;
 
@@ -75,7 +139,7 @@ int findMinCost(int visited[N])
         local_count++;
 
         // Find the next closest city
-        int nextCity = minDistance(currCity, visited);
+        int nextCity = minDistance(currCity, visited, optimalCity);
 
         // Add the distance to the minimum cost
         local_minCost += distances[currCity][nextCity];
@@ -91,7 +155,7 @@ int findMinCost(int visited[N])
     visited[0] = 1;
 
     // Find the next closest cty (which should be the starting city)
-    int nextCity = minDistance(currCity, visited);
+    int nextCity = minDistance(currCity, visited, optimalCity);
 
     // Add the distance from the last city to the starting city
     local_minCost += distances[currCity][nextCity];
