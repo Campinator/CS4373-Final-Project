@@ -163,11 +163,15 @@ int findMinCost(int visited[N])
     // Move to the starting city
     currCity = nextCity;
 
-        if (local_minCost < global_mincost) {
-            global_mincost = local_minCost;
-            memcpy(global_visited_cities, local_visited_cities, sizeof(local_visited_cities));
-            global_count = local_count;
-        }
+#pragma omp critical
+{
+    if (local_minCost < global_mincost)
+    {
+        global_mincost = local_minCost;
+        memcpy(global_visited_cities, local_visited_cities, sizeof(local_visited_cities));
+        global_count = local_count;
+    }
+}
 
     return global_mincost;
 }
@@ -230,6 +234,8 @@ int main(int argc, char *argv[])
     {
         // Array to keep track of which cities have been visited
         int visited[N] = {0};
+
+#pragma omp parallel num_threads(thread_count)
 
         global_mincost = findMinCost(visited);
 
